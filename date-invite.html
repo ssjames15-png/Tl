@@ -1,0 +1,777 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Свидание?</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;600;700;800&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --blush-1: #FFEDF2;
+    --blush-2: #FFDCE6;
+    --frame-1: #FF8FB3;
+    --frame-2: #FFC1D6;
+    --ink: #4A3140;
+    --ink-soft: #8C7284;
+    --coral: #FF6F91;
+    --coral-2: #FFA36C;
+    --lav: #C9C2E8;
+    --lav-ink: #5A5470;
+    --cream: #FFFBF8;
+    --sky: #BFE3F0;
+    box-sizing: border-box;
+    padding-top: env(safe-area-inset-top, 0px);
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+  }
+  *{ box-sizing: inherit; }
+  html{ height:100%; scroll-padding-top: env(safe-area-inset-top, 0px); }
+  body{
+    margin:0;
+    min-height:100%;
+    background: var(--blush-1);
+    color: var(--ink);
+    font-family: 'Nunito', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    position:relative;
+    overflow-x:hidden;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  /* decorative blobs */
+  .blob{ position:fixed; border-radius: 42% 58% 65% 35% / 45% 45% 55% 55%; z-index:0; opacity:0.7; filter: blur(0.5px); }
+  .blob.b1{ width:120px; height:100px; background: var(--sky); top:6%; left:-30px; }
+  .blob.b2{ width:90px; height:80px; background: var(--sky); bottom:10%; right:-24px; }
+  .blob.b3{ width:60px; height:52px; background: var(--blush-2); top:14%; right:8%; }
+  @media (min-width: 480px){
+    .blob.b1{ top:8%; left:6%; }
+    .blob.b2{ bottom:12%; right:6%; }
+  }
+
+  .ambient{ position:fixed; inset:0; z-index:0; pointer-events:none; overflow:hidden; }
+  .ambient span{
+    position:absolute;
+    bottom:-40px;
+    opacity:0.35;
+    animation: floatUp linear infinite;
+  }
+  @keyframes floatUp{
+    to{ transform: translateY(-115vh) translateX(var(--drift,0px)) rotate(20deg); opacity:0; }
+  }
+  @media (prefers-reduced-motion: reduce){
+    .ambient{ display:none; }
+  }
+
+  .frame{
+    position:relative;
+    z-index:1;
+    width:min(92vw, 400px);
+    margin: 24px 0;
+    padding: 12px;
+    border-radius: 46px;
+    background: linear-gradient(160deg, var(--frame-1), var(--frame-2));
+    box-shadow: 0 24px 60px rgba(255,110,150,0.28);
+  }
+  main.card{
+    position:relative;
+    background: var(--cream);
+    border-radius: 36px;
+    padding: 34px 24px 26px;
+    min-height: 430px;
+    display:flex;
+    flex-direction:column;
+    overflow:hidden;
+  }
+
+  .dots{
+    display:flex;
+    justify-content:center;
+    gap:6px;
+    margin-bottom: 18px;
+  }
+  .dots span{
+    width:6px; height:6px; border-radius:50%;
+    background: var(--blush-2);
+    transition: background 0.2s, transform 0.2s;
+  }
+  .dots span.active{ background: var(--coral); transform: scale(1.3); }
+  .dots span.done{ background: var(--lav); }
+
+  .screen{ display:flex; flex-direction:column; flex:1; animation: rise 0.45s cubic-bezier(.2,.8,.2,1); }
+  .screen[hidden]{ display:none; }
+  @keyframes rise{
+    from{ opacity:0; transform: translateY(12px); }
+    to{ opacity:1; transform: translateY(0); }
+  }
+
+  .illustration{ display:flex; justify-content:center; margin-bottom: 6px; }
+
+  .headline{
+    font-family:'Baloo 2', 'Nunito', sans-serif;
+    font-weight:700;
+    font-size: clamp(1.35rem, 6.5vw, 1.7rem);
+    line-height:1.28;
+    text-align:center;
+    margin: 4px 0 8px;
+    color: var(--ink);
+  }
+  .sub{
+    text-align:center;
+    color: var(--ink-soft);
+    font-size: 0.94rem;
+    font-weight:600;
+    line-height:1.5;
+    margin: 0 0 20px;
+    max-width: 30ch;
+    margin-left:auto; margin-right:auto;
+  }
+
+  .dodge-zone{ position:relative; height: 190px; margin-top: 6px; }
+  .btn{
+    font-family:'Nunito', sans-serif;
+    font-weight:800;
+    font-size: 1.02rem;
+    border:none;
+    border-radius: 999px;
+    padding: 15px 28px;
+    cursor:pointer;
+    transition: transform 0.26s cubic-bezier(.2,.8,.2,1), left 0.26s cubic-bezier(.2,.8,.2,1), top 0.26s cubic-bezier(.2,.8,.2,1), background 0.2s, box-shadow 0.2s;
+    -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
+  }
+  .btn-yes{
+    position:absolute; left:50%; top:2px;
+    transform: translate(-50%, 0) scale(var(--yes-scale, 1));
+    background: linear-gradient(135deg, var(--coral), var(--coral-2));
+    color: #fff;
+    box-shadow: 0 12px 26px rgba(255,111,145,0.4);
+  }
+  .btn-yes:active{ transform: translate(-50%, 0) scale(calc(var(--yes-scale, 1) * 0.96)); }
+  .btn-no{
+    position:absolute; left:50%; top:88px;
+    transform: translate(-50%, 0);
+    background: #F1EDF7;
+    color: var(--lav-ink);
+    font-weight:700;
+    font-size:0.95rem;
+    padding: 12px 22px;
+  }
+  .kiss{
+    position:absolute;
+    font-size: 1.1rem;
+    pointer-events:none;
+    animation: kissPop 0.7s ease-out forwards;
+  }
+  @keyframes kissPop{
+    0%{ opacity:0; transform: translateY(0) scale(0.5); }
+    30%{ opacity:1; transform: translateY(-10px) scale(1.1); }
+    100%{ opacity:0; transform: translateY(-34px) scale(0.9); }
+  }
+  .hint{
+    text-align:center;
+    color: var(--ink-soft);
+    font-size: 0.85rem;
+    font-weight:600;
+    font-style: italic;
+    min-height: 1.4em;
+    margin-top: 6px;
+  }
+
+  .btn-full{ width:100%; padding:16px; font-size:1.02rem; }
+  .btn-primary{
+    background: linear-gradient(135deg, var(--coral), var(--coral-2));
+    color:#fff;
+    box-shadow: 0 10px 22px rgba(255,111,145,0.35);
+  }
+  .btn-primary:disabled{ opacity:0.35; cursor:not-allowed; box-shadow:none; }
+  .btn-primary:focus-visible, .btn:focus-visible, .option:focus-visible, .pill:focus-visible, .chip:focus-visible{
+    outline: 2px solid var(--coral); outline-offset: 2px;
+  }
+
+  .options-grid{ display:grid; grid-template-columns: 1fr 1fr; gap:10px; margin-bottom: 20px; }
+  .option{
+    background: #FFF6F8;
+    border: 1.5px solid #FBE3EA;
+    border-radius: 18px;
+    padding: 15px 8px;
+    display:flex; flex-direction:column; align-items:center; gap:7px;
+    cursor:pointer;
+    transition: border-color 0.2s, background 0.2s, transform 0.15s;
+    color: var(--ink);
+  }
+  .option .emoji{ font-size:1.5rem; }
+  .option span{ font-size:0.86rem; font-weight:700; text-align:center; }
+  .option.selected{ border-color: var(--coral); background: #FFE9EF; transform: translateY(-2px); }
+  .option.custom-active{ grid-column: span 2; }
+  .option input{
+    width:100%; background: transparent; border:none; border-bottom: 1.5px solid #F3C7D4;
+    color: var(--ink); font-family:'Nunito',sans-serif; font-weight:700; font-size:0.9rem;
+    text-align:center; padding: 4px 0; outline:none;
+  }
+
+  .date-grid{ display:flex; flex-wrap:wrap; gap:8px; margin-bottom: 16px; justify-content:center; }
+  .pill{
+    background: #FFF6F8; border: 1.5px solid #FBE3EA; border-radius: 14px;
+    padding: 9px 12px; display:flex; flex-direction:column; align-items:center;
+    min-width: 54px; cursor:pointer; transition: border-color 0.2s, background 0.2s; color: var(--ink);
+  }
+  .pill .wd{ font-size:0.68rem; color: var(--ink-soft); font-weight:700; }
+  .pill .dn{ font-size:1.0rem; font-weight:800; }
+  .pill.selected{ border-color: var(--coral); background: #FFE9EF; }
+  .pill.own{ min-width: 104px; }
+  .pill.own input{
+    background: transparent; border:none; color: var(--ink); font-family:'Nunito',sans-serif;
+    font-weight:700; font-size:0.82rem; text-align:center; outline:none; width:100%;
+  }
+
+  .chip-row{ display:flex; flex-wrap:wrap; gap:8px; margin-bottom: 20px; justify-content:center; }
+  .chip{
+    background: #FFF6F8; border: 1.5px solid #FBE3EA; border-radius: 999px;
+    padding: 9px 16px; font-size:0.85rem; font-weight:700; color: var(--ink);
+    cursor:pointer; transition: border-color 0.2s, background 0.2s;
+  }
+  .chip.selected{ border-color: var(--coral); background: #FFE9EF; }
+  .chip.time-exact{ display:flex; align-items:center; gap:6px; padding: 7px 14px; }
+  .chip.time-exact input[type="time"]{
+    background:transparent; border:none; color: var(--ink); font-family:'Nunito',sans-serif;
+    font-weight:700; font-size:0.85rem; outline:none; width: 74px;
+  }
+
+  textarea{
+    width:100%; min-height: 88px; resize: vertical;
+    background: #FFF6F8; border: 1.5px solid #FBE3EA; border-radius: 16px;
+    color: var(--ink); font-family:'Nunito', sans-serif; font-weight:600; font-size: 0.94rem;
+    padding: 13px; outline:none; margin-bottom: 20px;
+  }
+  textarea::placeholder{ color: #C9AFBB; }
+  textarea:focus{ border-color: var(--coral); }
+
+  .nav-row{ display:flex; align-items:center; justify-content: space-between; gap: 12px; margin-top:auto; }
+  .btn-text{
+    background:none; border:none; color: var(--ink-soft); font-family:'Nunito', sans-serif;
+    font-size:0.9rem; font-weight:700; cursor:pointer; padding: 10px 4px;
+  }
+
+  .summary-card{
+    background: #FFF6F8; border: 1.5px solid #FBE3EA; border-radius: 18px;
+    padding: 16px; margin-bottom: 18px; font-size:0.94rem; font-weight:600; line-height:1.7;
+  }
+  .summary-card b{ color: var(--coral); font-weight:800; }
+
+  .final-icon{ font-size: 2.6rem; text-align:center; margin-bottom: 6px; }
+
+  #copy-fallback{ margin-bottom: 12px; }
+  #copy-fallback textarea{ margin-bottom: 8px; min-height:74px; }
+  #restart-btn{ text-align:center; align-self:center; }
+  #send-hint{ text-align:center; color: var(--ink-soft); font-size:0.82rem; font-weight:700; min-height:1.4em; margin: 8px 0 2px; }
+
+  /* confetti hearts on final screen */
+  .confetti{ position:absolute; inset:0; pointer-events:none; overflow:hidden; z-index:0; }
+  .confetti span{
+    position:absolute; top:-20px; font-size: 1rem;
+    animation: fall linear forwards;
+    opacity:0.9;
+  }
+  @keyframes fall{
+    to{ transform: translateY(460px) rotate(200deg); opacity:0; }
+  }
+  @media (prefers-reduced-motion: reduce){
+    .screen{ animation:none; }
+    .confetti{ display:none; }
+  }
+</style>
+</head>
+<body>
+
+<div class="ambient" id="ambient"></div>
+<div class="blob b1"></div>
+<div class="blob b2"></div>
+<div class="blob b3"></div>
+
+<div class="frame">
+<main class="card" id="card">
+
+  <section class="screen" data-screen="ask">
+    <div class="illustration">
+      <svg width="128" height="86" viewBox="0 0 128 86" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <!-- orange cat -->
+        <g>
+          <path d="M20 30 L14 14 L28 22 Z" fill="#F2A65A"/>
+          <path d="M40 30 L46 14 L32 22 Z" fill="#F2A65A"/>
+          <ellipse cx="30" cy="46" rx="22" ry="24" fill="#F6BC7E"/>
+          <path d="M14 40q6-4 10 0" stroke="#B8763A" stroke-width="2" stroke-linecap="round" fill="none"/>
+          <path d="M46 40q-6-4-10 0" stroke="#B8763A" stroke-width="2" stroke-linecap="round" fill="none"/>
+          <circle cx="23" cy="46" r="2.6" fill="#4A3140"/>
+          <circle cx="37" cy="46" r="2.6" fill="#4A3140"/>
+          <path d="M27 54q3 3 6 0" stroke="#4A3140" stroke-width="2" stroke-linecap="round" fill="none"/>
+        </g>
+        <!-- heart between -->
+        <path d="M64 40c-4-6-14-3-14 4 0 6 8 11 14 16 6-5 14-10 14-16 0-7-10-10-14-4z" fill="#FF6F91"/>
+        <!-- white cat -->
+        <g>
+          <path d="M88 30 L82 14 L96 22 Z" fill="#FFF3EE"/>
+          <path d="M108 30 L114 14 L100 22 Z" fill="#FFF3EE"/>
+          <ellipse cx="98" cy="46" rx="22" ry="24" fill="#FFFBF8" stroke="#F0DCE2" stroke-width="1.5"/>
+          <path d="M83 44q5-5 9 0" stroke="#D9A9B8" stroke-width="2" stroke-linecap="round" fill="none"/>
+          <path d="M113 44q-5-5-9 0" stroke="#D9A9B8" stroke-width="2" stroke-linecap="round" fill="none"/>
+          <circle cx="91" cy="46" r="2.6" fill="#4A3140"/>
+          <circle cx="105" cy="46" r="2.6" fill="#4A3140"/>
+          <path d="M94 55q4 3 8 0" stroke="#4A3140" stroke-width="2" stroke-linecap="round" fill="none"/>
+        </g>
+      </svg>
+    </div>
+    <h1 class="headline">Пойдёшь со мной<br>на свидание?</h1>
+    <p class="sub">Обещаю, будет тепло и вкусно</p>
+    <div class="dodge-zone">
+      <button class="btn btn-yes" id="btn-yes" style="--yes-scale:1">Да, идём!</button>
+      <button class="btn btn-no" id="btn-no">Нет</button>
+    </div>
+    <p class="hint" id="dodge-hint">&nbsp;</p>
+  </section>
+
+  <section class="screen" data-screen="confirm" hidden>
+    <div class="dots"><span class="active"></span><span></span><span></span><span></span><span></span></div>
+    <div class="illustration">
+      <svg width="90" height="90" viewBox="0 0 90 90" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <ellipse cx="45" cy="48" rx="30" ry="30" fill="#FFFBF8" stroke="#F0DCE2" stroke-width="1.5"/>
+        <path d="M22 38 L14 20 L32 30 Z" fill="#FFF3EE"/>
+        <path d="M68 38 L76 20 L58 30 Z" fill="#FFF3EE"/>
+        <circle cx="33" cy="50" r="3.4" fill="#4A3140"/>
+        <circle cx="57" cy="50" r="3.4" fill="#4A3140"/>
+        <ellipse cx="24" cy="58" rx="5" ry="3.2" fill="#FFC1D6" opacity="0.8"/>
+        <ellipse cx="66" cy="58" rx="5" ry="3.2" fill="#FFC1D6" opacity="0.8"/>
+        <path d="M36 62q9 6 18 0" stroke="#4A3140" stroke-width="2" stroke-linecap="round" fill="none"/>
+      </svg>
+    </div>
+    <h2 class="headline">Секунду...<br>ты точно сказала да?</h2>
+    <p class="sub">Просто хочу убедиться, что мне не показалось 👀</p>
+    <div class="nav-row" style="margin-top:auto;">
+      <button class="btn-text" data-back>Назад</button>
+      <button class="btn btn-primary" id="confirm-yes">Да, точно да!</button>
+    </div>
+  </section>
+
+  <section class="screen" data-screen="activity" hidden>
+    <div class="dots"><span class="done"></span><span class="active"></span><span></span><span></span><span></span></div>
+    <h2 class="headline" style="font-size:clamp(1.2rem,5.5vw,1.45rem)">Что тебе по кайфу?</h2>
+    <p class="sub">Выбери, куда идём</p>
+    <div class="options-grid" id="activity-grid"></div>
+    <div class="nav-row">
+      <button class="btn-text" data-back>Назад</button>
+      <button class="btn btn-primary" id="to-date" disabled>Дальше</button>
+    </div>
+  </section>
+
+  <section class="screen" data-screen="date" hidden>
+    <div class="dots"><span class="done"></span><span class="done"></span><span class="active"></span><span></span><span></span></div>
+    <h2 class="headline" style="font-size:clamp(1.2rem,5.5vw,1.45rem)">Когда ты свободна?</h2>
+    <p class="sub">Выбери день и время</p>
+    <div class="date-grid" id="date-grid"></div>
+    <div class="chip-row" id="time-chips"></div>
+    <div class="nav-row">
+      <button class="btn-text" data-back>Назад</button>
+      <button class="btn btn-primary" id="to-note" disabled>Дальше</button>
+    </div>
+  </section>
+
+  <section class="screen" data-screen="note" hidden>
+    <div class="dots"><span class="done"></span><span class="done"></span><span class="done"></span><span class="active"></span><span></span></div>
+    <h2 class="headline" style="font-size:clamp(1.2rem,5.5vw,1.45rem)">Хочешь что-то добавить?</h2>
+    <p class="sub">Необязательно</p>
+    <textarea id="note" placeholder="Например: только не опаздывай :)"></textarea>
+    <div class="nav-row">
+      <button class="btn-text" data-back>Назад</button>
+      <button class="btn btn-primary" id="to-summary">Дальше</button>
+    </div>
+  </section>
+
+  <section class="screen" data-screen="summary" hidden>
+    <div class="confetti" id="confetti"></div>
+    <div class="dots"><span class="done"></span><span class="done"></span><span class="done"></span><span class="done"></span><span class="active"></span></div>
+    <div class="final-icon" id="final-icon">💌</div>
+    <h2 class="headline">Ура, значит идём!</h2>
+    <div class="summary-card" id="summary-card"></div>
+    <button class="btn btn-primary btn-full" id="send-btn">Готово, сообщить 💌</button>
+    <p class="hint" id="send-hint">&nbsp;</p>
+    <button class="btn-text" id="other-way-btn">Отправить другим способом</button>
+    <div id="copy-fallback" hidden>
+      <textarea readonly id="share-text"></textarea>
+      <button class="btn-text" id="copy-btn">Скопировать текст</button>
+    </div>
+    <button class="btn-text" id="restart-btn">Пригласить ещё раз</button>
+  </section>
+
+</main>
+</div>
+
+<script>
+(function(){
+  // ---------- ambient background hearts ----------
+  var ambientBox = document.getElementById('ambient');
+  var ambientEmojis = ['💗','💕','✨'];
+  for(var ai=0; ai<7; ai++){
+    var a = document.createElement('span');
+    a.textContent = ambientEmojis[ai % ambientEmojis.length];
+    a.style.left = (Math.random()*100) + '%';
+    a.style.fontSize = (0.7 + Math.random()*0.9) + 'rem';
+    a.style.setProperty('--drift', (Math.random()*40 - 20) + 'px');
+    a.style.animationDuration = (10 + Math.random()*8) + 's';
+    a.style.animationDelay = (Math.random()*10) + 's';
+    ambientBox.appendChild(a);
+  }
+
+  var state = { activity:null, activityCustom:'', date:null, dateLabel:'', time:null, note:'' };
+
+  var screens = Array.prototype.slice.call(document.querySelectorAll('.screen'));
+  function showScreen(name){
+    screens.forEach(function(sc){ sc.hidden = sc.getAttribute('data-screen') !== name; });
+  }
+  var order = ['ask','confirm','activity','date','note','summary'];
+  document.querySelectorAll('[data-back]').forEach(function(btn){
+    btn.addEventListener('click', function(){
+      var current = screens.find(function(s){ return !s.hidden; }).getAttribute('data-screen');
+      var idx = order.indexOf(current);
+      if(idx > 0) showScreen(order[idx-1]);
+    });
+  });
+
+  // ---------- dodge "Нет" ----------
+  var dodgeZone = document.querySelector('.dodge-zone');
+  var btnNo = document.getElementById('btn-no');
+  var btnYes = document.getElementById('btn-yes');
+  var hint = document.getElementById('dodge-hint');
+  var dodgeCount = 0;
+  var captions = [
+    'Ой, кнопка убежала',
+    'Странно, снова мимо',
+    'Она правда не хочет находиться',
+    'Похоже, ответ только один',
+    'Может, просто "да"? 👉'
+  ];
+
+  function popKiss(){
+    var k = document.createElement('span');
+    k.className = 'kiss';
+    k.textContent = '💋';
+    var r = btnNo.getBoundingClientRect();
+    var zoneR = dodgeZone.getBoundingClientRect();
+    k.style.left = (r.left - zoneR.left + r.width/2 - 8) + 'px';
+    k.style.top = (r.top - zoneR.top) + 'px';
+    dodgeZone.appendChild(k);
+    setTimeout(function(){ k.remove(); }, 700);
+  }
+
+  function dodge(){
+    dodgeCount++;
+    popKiss();
+    var zoneRect = dodgeZone.getBoundingClientRect();
+    var btnRect = btnNo.getBoundingClientRect();
+    var maxLeft = Math.max(zoneRect.width - btnRect.width - 8, 8);
+    var maxTop = Math.max(zoneRect.height - btnRect.height - 8, 8);
+    btnNo.style.left = (8 + Math.random() * maxLeft) + 'px';
+    btnNo.style.top = (8 + Math.random() * maxTop) + 'px';
+    btnNo.style.transform = 'translate(0,0)';
+    var scale = Math.min(1 + dodgeCount * 0.03, 1.2);
+    btnYes.style.setProperty('--yes-scale', scale.toFixed(2));
+    hint.textContent = captions[Math.min(dodgeCount-1, captions.length-1)];
+  }
+
+  ['pointerenter','pointerdown','touchstart'].forEach(function(evt){
+    btnNo.addEventListener(evt, function(e){ e.preventDefault(); dodge(); }, {passive:false});
+  });
+  btnNo.addEventListener('click', function(e){ e.preventDefault(); dodge(); });
+  btnYes.addEventListener('click', function(){ showScreen('confirm'); });
+  document.getElementById('confirm-yes').addEventListener('click', function(){ showScreen('activity'); });
+
+  // ---------- activity ----------
+  var activities = [
+    { id:'dinner', label:'Ужин при свечах', emoji:'🕯️' },
+    { id:'cinema', label:'Кино', emoji:'🎬' },
+    { id:'walk', label:'Прогулка', emoji:'🌇' },
+    { id:'custom', label:'Свой вариант', emoji:'✨' }
+  ];
+  var activityGrid = document.getElementById('activity-grid');
+  var toDateBtn = document.getElementById('to-date');
+
+  function renderActivities(){
+    activityGrid.innerHTML = '';
+    activities.forEach(function(a){
+      var el = document.createElement('div');
+      el.className = 'option' + (state.activity === a.id ? ' selected' : '') + (a.id==='custom' && state.activity==='custom' ? ' custom-active' : '');
+      el.tabIndex = 0;
+      el.innerHTML = '<span class="emoji">'+a.emoji+'</span><span>'+a.label+'</span>';
+      if(a.id === 'custom' && state.activity === 'custom'){
+        var input = document.createElement('input');
+        input.type = 'text';
+        input.placeholder = 'Куда именно?';
+        input.value = state.activityCustom;
+        input.addEventListener('click', function(e){ e.stopPropagation(); });
+        input.addEventListener('input', function(e){
+          state.activityCustom = e.target.value;
+          toDateBtn.disabled = state.activityCustom.trim().length === 0;
+        });
+        el.appendChild(input);
+        setTimeout(function(){ input.focus(); }, 50);
+      }
+      el.addEventListener('click', function(){
+        state.activity = a.id;
+        if(a.id !== 'custom') state.activityCustom = '';
+        renderActivities();
+        toDateBtn.disabled = a.id === 'custom' ? state.activityCustom.trim().length === 0 : false;
+      });
+      activityGrid.appendChild(el);
+    });
+  }
+  renderActivities();
+  toDateBtn.addEventListener('click', function(){ showScreen('date'); });
+
+  // ---------- date + time ----------
+  var dateGrid = document.getElementById('date-grid');
+  var toNoteBtn = document.getElementById('to-note');
+  var weekdays = ['вс','пн','вт','ср','чт','пт','сб'];
+  var months = ['января','февраля','марта','апреля','мая','июня','июля','августа','сентября','октября','ноября','декабря'];
+
+  function checkDateStepComplete(){
+    var timeOk = state.time && state.time !== 'exact';
+    toNoteBtn.disabled = !(state.date && state.dateLabel && timeOk);
+  }
+
+  function renderDates(){
+    dateGrid.innerHTML = '';
+    var today = new Date();
+    for(var i=0;i<6;i++){
+      (function(i){
+        var d = new Date(today);
+        d.setDate(d.getDate()+i);
+        var key = d.toISOString().slice(0,10);
+        var pill = document.createElement('div');
+        pill.className = 'pill' + (state.date === key ? ' selected' : '');
+        pill.tabIndex = 0;
+        pill.innerHTML = '<span class="wd">'+ (i===0?'сегодня':(i===1?'завтра':weekdays[d.getDay()])) +'</span><span class="dn">'+ d.getDate() +'</span>';
+        pill.addEventListener('click', function(){
+          state.date = key;
+          state.dateLabel = (i===0?'сегодня, ':(i===1?'завтра, ':'')) + d.getDate() + ' ' + months[d.getMonth()];
+          renderDates();
+          checkDateStepComplete();
+        });
+        dateGrid.appendChild(pill);
+      })(i);
+    }
+    var own = document.createElement('div');
+    own.className = 'pill own' + (state.date === 'own' ? ' selected' : '');
+    if(state.date === 'own'){
+      var input = document.createElement('input');
+      input.type = 'date';
+      input.addEventListener('click', function(e){ e.stopPropagation(); });
+      input.addEventListener('change', function(e){
+        if(e.target.value){
+          var d = new Date(e.target.value + 'T00:00:00');
+          state.dateLabel = d.getDate() + ' ' + months[d.getMonth()];
+          checkDateStepComplete();
+        }
+      });
+      own.appendChild(input);
+    } else {
+      own.innerHTML = '<span class="dn">Другая<br>дата</span>';
+    }
+    own.addEventListener('click', function(){
+      state.date = 'own';
+      state.dateLabel = '';
+      checkDateStepComplete();
+      renderDates();
+    });
+    dateGrid.appendChild(own);
+  }
+
+  var timeOptions = ['Утром','Днём','Вечером'];
+  var timeChipsEl = document.getElementById('time-chips');
+  function renderTimeChips(){
+    timeChipsEl.innerHTML = '';
+    timeOptions.forEach(function(t){
+      var chip = document.createElement('div');
+      chip.className = 'chip' + (state.time === t ? ' selected' : '');
+      chip.tabIndex = 0;
+      chip.textContent = t;
+      chip.addEventListener('click', function(){
+        state.time = t;
+        renderTimeChips();
+        checkDateStepComplete();
+      });
+      timeChipsEl.appendChild(chip);
+    });
+    // exact time chip
+    var exact = document.createElement('div');
+    var isExactMode = state.time === 'exact' || (state.timeExactValue && state.time === state.timeExactValue);
+    exact.className = 'chip time-exact' + (isExactMode ? ' selected' : '');
+    if(isExactMode){
+      var timeInput = document.createElement('input');
+      timeInput.type = 'time';
+      if(state.timeExactValue) timeInput.value = state.timeExactValue;
+      timeInput.addEventListener('click', function(e){ e.stopPropagation(); });
+      timeInput.addEventListener('change', function(e){
+        if(e.target.value){
+          state.timeExactValue = e.target.value;
+          state.time = 'в ' + e.target.value;
+          checkDateStepComplete();
+        }
+      });
+      exact.appendChild(document.createTextNode('🕐 '));
+      exact.appendChild(timeInput);
+      setTimeout(function(){ timeInput.focus(); }, 30);
+    } else {
+      exact.textContent = '🕐 Точное время';
+    }
+    exact.addEventListener('click', function(){
+      state.time = 'exact';
+      renderTimeChips();
+    });
+    timeChipsEl.appendChild(exact);
+  }
+  renderDates();
+  renderTimeChips();
+  toNoteBtn.addEventListener('click', function(){ showScreen('note'); });
+
+  // ---------- note ----------
+  var noteInput = document.getElementById('note');
+  document.getElementById('to-summary').addEventListener('click', function(){
+    state.note = noteInput.value.trim();
+    buildSummary();
+    launchConfetti();
+    showScreen('summary');
+  });
+
+  // ---------- summary ----------
+  var summaryCard = document.getElementById('summary-card');
+  var finalIcon = document.getElementById('final-icon');
+  function activityLabel(){
+    if(state.activity === 'custom') return state.activityCustom || 'что-то интересное';
+    var found = activities.find(function(a){ return a.id === state.activity; });
+    return found ? found.label : '';
+  }
+  function activityEmoji(){
+    var found = activities.find(function(a){ return a.id === state.activity; });
+    return found ? found.emoji : '💌';
+  }
+  function escapeHtml(str){
+    var d = document.createElement('div');
+    d.textContent = str;
+    return d.innerHTML;
+  }
+  function buildSummary(){
+    finalIcon.textContent = activityEmoji();
+    var lines = [
+      '<div><b>Куда:</b> ' + escapeHtml(activityLabel()) + '</div>',
+      '<div><b>Когда:</b> ' + escapeHtml(state.dateLabel || '') + ', ' + escapeHtml(state.time || '') + '</div>'
+    ];
+    if(state.note){ lines.push('<div><b>От неё:</b> ' + escapeHtml(state.note) + '</div>'); }
+    summaryCard.innerHTML = lines.join('');
+  }
+
+  function launchConfetti(){
+    var box = document.getElementById('confetti');
+    box.innerHTML = '';
+    var hearts = ['💕','💖','💗','💝'];
+    for(var i=0;i<16;i++){
+      var s = document.createElement('span');
+      s.textContent = hearts[Math.floor(Math.random()*hearts.length)];
+      s.style.left = (Math.random()*100) + '%';
+      s.style.animationDuration = (2.2 + Math.random()*1.6) + 's';
+      s.style.animationDelay = (Math.random()*0.6) + 's';
+      s.style.fontSize = (0.8 + Math.random()*0.8) + 'rem';
+      box.appendChild(s);
+    }
+  }
+
+  function shareText(){
+    var parts = ['Я говорю ДА на свидание! 💌', '', '📍 Куда: ' + activityLabel(), '📅 Когда: ' + (state.dateLabel || '') + ', ' + (state.time || '')];
+    if(state.note) parts.push('💬 ' + state.note);
+    return parts.join('\n');
+  }
+
+  var WORKER_URL = 'https://1.ssjames15.workers.dev/send';
+  var TELEGRAM_USERNAME = 'ss_james';
+  var sendBtn = document.getElementById('send-btn');
+  var otherWayBtn = document.getElementById('other-way-btn');
+  var sendHint = document.getElementById('send-hint');
+  var copyFallback = document.getElementById('copy-fallback');
+  var shareTextArea = document.getElementById('share-text');
+  var copyBtn = document.getElementById('copy-btn');
+  var sent = false;
+
+  sendBtn.addEventListener('click', function(){
+    if(sent) return;
+    var text = shareText();
+    var workerUrl = WORKER_URL + '?text=' + encodeURIComponent(text);
+    sendBtn.disabled = true;
+    sendHint.textContent = 'Отправляю…';
+
+    // no-cors: we can't read the response, but the request still reaches the
+    // server and the Telegram message still gets sent — that's all we need.
+    fetch(workerUrl, { mode: 'no-cors' })
+      .then(function(){ markSent(); })
+      .catch(function(){
+        // genuine network failure (e.g. she's offline) — fall back to a manual Telegram send
+        fallbackToTelegram(text);
+      });
+  });
+
+  function markSent(){
+    sent = true;
+    sendBtn.disabled = true;
+    sendBtn.textContent = 'Отправлено ✓';
+    sendHint.textContent = 'Джеймс уже получил уведомление 💌';
+  }
+
+  function fallbackToTelegram(text){
+    var url = 'https://t.me/' + TELEGRAM_USERNAME + '?text=' + encodeURIComponent(text);
+    window.open(url, '_blank');
+    sendBtn.disabled = false;
+    sendHint.textContent = 'Открылся Telegram — останется нажать «отправить» там';
+  }
+
+  otherWayBtn.addEventListener('click', function(){
+    var text = shareText();
+    if(navigator.share){
+      navigator.share({ title: 'Свидание', text: text }).catch(function(){ showCopyFallback(text); });
+    } else {
+      showCopyFallback(text);
+    }
+  });
+  function showCopyFallback(text){ shareTextArea.value = text; copyFallback.hidden = false; }
+  copyBtn.addEventListener('click', function(){
+    shareTextArea.select();
+    shareTextArea.setSelectionRange(0, 99999);
+    try{
+      navigator.clipboard.writeText(shareTextArea.value).then(function(){
+        copyBtn.textContent = 'Скопировано ✓';
+        setTimeout(function(){ copyBtn.textContent = 'Скопировать текст'; }, 1800);
+      });
+    }catch(e){ document.execCommand('copy'); }
+  });
+
+  document.getElementById('restart-btn').addEventListener('click', function(){
+    state = { activity:null, activityCustom:'', date:null, dateLabel:'', time:null, timeExactValue:null, note:'' };
+    dodgeCount = 0;
+    btnYes.style.setProperty('--yes-scale', 1);
+    btnNo.style.left = ''; btnNo.style.top = '';
+    hint.textContent = '\u00a0';
+    sendHint.textContent = '\u00a0';
+    sent = false;
+    sendBtn.disabled = false;
+    sendBtn.textContent = 'Готово, сообщить 💌';
+    noteInput.value = '';
+    copyFallback.hidden = true;
+    renderActivities();
+    renderDates();
+    renderTimeChips();
+    toDateBtn.disabled = true;
+    toNoteBtn.disabled = true;
+    showScreen('ask');
+  });
+})();
+</script>
+</body>
+</html>
